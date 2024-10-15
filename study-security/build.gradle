@@ -1,0 +1,85 @@
+buildscript {
+    ext {
+        spring = "2.7.5"  // Or any latest stable version of Spring Boot
+        boot = "org.springframework.boot"
+        lombok = "org.projectlombok:lombok"
+    }
+
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("$boot:spring-boot-gradle-plugin:$spring")
+    }
+}
+
+
+allprojects {
+    group = "com.sp.fc"
+    version = "1.0.0"
+}
+
+subprojects {
+
+    apply plugin: 'java'
+    apply plugin: 'org.springframework.boot'  // Apply Spring Boot plugin correctly
+    apply plugin: 'io.spring.dependency-management'
+    apply plugin: 'idea'
+
+    repositories {
+        mavenCentral()
+    }
+
+    configurations {
+        developmentOnly
+        runtimeClasspath {
+            extendsFrom developmentOnly
+        }
+    }
+
+    dependencies {
+        developmentOnly("$boot:spring-boot-devtools")
+        implementation "$boot:spring-boot-starter-security"
+        implementation 'com.fasterxml.jackson.core:jackson-annotations'
+
+        compileOnly lombok
+        testCompileOnly lombok
+        annotationProcessor lombok
+        testAnnotationProcessor lombok
+
+        testImplementation "$boot:spring-boot-starter-test"
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+
+}
+
+// Disabling bootJar and enabling jar for certain subprojects
+["comp", "web"].each { projectName ->
+    def subProjectDir = new File(projectDir, projectName)
+    subProjectDir.eachDir { dir ->
+        def fullProjectName = ":${projectName}-${dir.name}"
+        project(fullProjectName) {
+            tasks.named('bootJar').configure {
+                enabled = false
+            }
+            tasks.named('jar').configure {
+                enabled = true
+            }
+        }
+    }
+}
+
+["server"].each { projectName ->
+    def subProjectDir = new File(projectDir, projectName)
+    subProjectDir.eachDir { dir ->
+        def fullProjectName = ":${projectName}-${dir.name}"
+        project(fullProjectName) {
+            // You can add specific configurations here
+        }
+    }
+}
+
+help.enabled = false
